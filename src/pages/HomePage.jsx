@@ -1,4 +1,4 @@
-import { ArrowDownRight, ArrowRight, MapPin } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import ImmersiveHero from '../components/ImmersiveHero.jsx'
 import LocationSection from '../components/LocationSection.jsx'
@@ -36,37 +36,6 @@ export default function HomePage() {
   return (
     <>
       <ImmersiveHero />
-
-      <section id="hero-actual" className="hero" aria-labelledby="hero-heading">
-        <div className="hero__copy">
-          <Reveal className="hero__content">
-            <p className="hero__eyebrow">Salón &amp; spa · Trujillo</p>
-            <h1 id="hero-heading">Eleva tu belleza.<br /><em>Disfruta tu momento.</em></h1>
-            <p className="hero__intro">Belleza, cuidado y bienestar en un mismo lugar. Elige tu experiencia y reserva de forma sencilla.</p>
-            <div className="hero__actions">
-              <a className="button button--primary" href={whatsappUrl()} target="_blank" rel="noreferrer">
-                Reservar cita <ArrowRight aria-hidden="true" size={18} />
-              </a>
-              <a className="button button--quiet" href="#servicios-rapidos">
-                Ver servicios <ArrowDownRight aria-hidden="true" size={18} />
-              </a>
-            </div>
-          </Reveal>
-          <div className="hero__location">
-            <MapPin aria-hidden="true" size={16} strokeWidth={1.7} />
-            <span>La Merced · Trujillo</span>
-          </div>
-        </div>
-        <div className="hero__visual">
-          <ResponsiveImage
-            src="/images/velvet/hero-hd.webp"
-            alt="Estilista trabajando cuidadosamente un cabello largo en el salón"
-            sizes="(max-width: 767px) 100vw, (min-width: 2440px) 1122px, 47vw"
-            loading="lazy"
-          />
-          <p className="hero__image-note"><span>01</span> Tu momento Velvet</p>
-        </div>
-      </section>
 
       <section id="servicios-rapidos" className="experiences" aria-labelledby="experiences-heading">
         <div className="section-heading section-heading--split">

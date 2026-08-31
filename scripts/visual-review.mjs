@@ -7,7 +7,6 @@ import puppeteer from 'puppeteer-core'
 const chromePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
 const outputDirectory = resolve('tmp/screens')
 const baseUrl = 'http://127.0.0.1:5173'
-const widths = [360, 375, 390, 412, 430, 768, 1024, 1280, 1366, 1440, 1600, 1728, 1920, 2560]
 const interactionOnly = process.argv.includes('--interactions-only')
 
 await mkdir(outputDirectory, { recursive: true })
@@ -25,6 +24,17 @@ async function preparePage(width, path = '/', deviceScaleFactor = 1, viewportHei
   await page.evaluate(() => document.fonts.ready)
   await new Promise((resolveDelay) => setTimeout(resolveDelay, 300))
   return page
+}
+
+async function revealPage(page) {
+  const scrollHeight = await page.evaluate(() => document.documentElement.scrollHeight)
+  const viewportHeight = await page.evaluate(() => window.innerHeight)
+  for (let top = 0; top < scrollHeight; top += Math.max(320, Math.round(viewportHeight * 0.72))) {
+    await page.evaluate((scrollTop) => window.scrollTo({ top: scrollTop, behavior: 'instant' }), top)
+    await new Promise((resolveDelay) => setTimeout(resolveDelay, 45))
+  }
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
+  await new Promise((resolveDelay) => setTimeout(resolveDelay, 100))
 }
 
 async function diagnostics(page) {
@@ -70,60 +80,6 @@ const report = []
 const layoutChecks = []
 
 if (!interactionOnly) {
-for (const width of widths) {
-  const page = await preparePage(width)
-  const result = await diagnostics(page)
-  const heroComposition = await page.evaluate(() => {
-    const hero = document.querySelector('.hero').getBoundingClientRect()
-    const copy = document.querySelector('.hero__copy').getBoundingClientRect()
-    const visual = document.querySelector('.hero__visual').getBoundingClientRect()
-    const headerInner = document.querySelector('.site-header__inner').getBoundingClientRect()
-    return {
-      viewportHeight: window.innerHeight,
-      heroHeight: Math.round(hero.height),
-      heroBottom: Math.round(hero.bottom),
-      heroLeft: Math.round(hero.left),
-      heroRight: Math.round(hero.right),
-      heroWidth: Math.round(hero.width),
-      copyWidth: Math.round(copy.width),
-      visualWidth: Math.round(visual.width),
-      visualRight: Math.round(visual.right),
-      headerWidth: Math.round(headerInner.width),
-      stampCount: document.querySelectorAll('.hero__stamp').length,
-    }
-  })
-  if (width >= 1101) {
-    const rightGutter = width - heroComposition.heroRight
-    assert.ok(heroComposition.heroLeft >= 31, `Hero needs a controlled left gutter at ${width}px`)
-    assert.ok(Math.abs(heroComposition.heroLeft - rightGutter) <= 2, `Hero must be horizontally centered at ${width}px`)
-    assert.ok(heroComposition.heroWidth <= 1520, `Hero exceeds its 1520px shell at ${width}px`)
-    assert.ok(Math.abs(heroComposition.visualRight - heroComposition.heroRight) <= 2, `Hero image must finish at the shell edge at ${width}px`)
-    assert.ok(heroComposition.visualWidth / heroComposition.heroWidth >= 0.65 && heroComposition.visualWidth / heroComposition.heroWidth <= 0.68, `Hero image layer is unbalanced at ${width}px`)
-  } else {
-    assert.equal(heroComposition.visualRight, width, `Hero image must reach the viewport edge at ${width}px`)
-    assert.equal(heroComposition.heroRight, width, `Hero must use the full viewport at ${width}px`)
-  }
-  if (width >= 768) {
-    assert.ok(heroComposition.heroHeight <= heroComposition.viewportHeight, `Current hero must fit within one viewport at ${width}px`)
-  }
-  assert.equal(heroComposition.stampCount, 0, 'Decorative magenta hero stamp should be removed')
-  assert.ok(heroComposition.headerWidth <= 1440, `Header shell exceeds 1440px at ${width}px`)
-  report.push({ width, ...result, heroComposition })
-  await page.screenshot({ path: resolve(outputDirectory, `home-${width}.png`) })
-  await page.close()
-}
-
-for (const [width, height] of [[1024, 768], [1440, 800], [1920, 947]]) {
-  const page = await preparePage(width, '/', 1, height)
-  const geometry = await page.evaluate(() => {
-    const hero = document.querySelector('.hero').getBoundingClientRect()
-    return { height: Math.round(hero.height), viewportHeight: window.innerHeight }
-  })
-  assert.ok(geometry.height <= geometry.viewportHeight, `Current hero exceeds ${width}x${height}: ${JSON.stringify(geometry)}`)
-  await page.screenshot({ path: resolve(outputDirectory, `hero-${width}x${height}.png`) })
-  await page.close()
-}
-
 for (const width of [390, 430, 768, 1366, 1440, 1728, 1920]) {
   const page = await preparePage(width, '/?hero=inmersivo')
   const result = await diagnostics(page)
@@ -146,7 +102,7 @@ for (const width of [390, 430, 768, 1366, 1440, 1728, 1920]) {
       headingCount: document.querySelectorAll('.immersive-hero h1').length,
     }
   })
-  assert.equal(composition.currentHeroCount, 1, `Current hero must appear after the immersive variant at ${width}px`)
+  assert.equal(composition.currentHeroCount, 0, `Legacy hero must not be rendered at ${width}px`)
   assert.equal(composition.immersiveHeroCount, 1, `Immersive hero is missing at ${width}px`)
   assert.equal(composition.slideCount, 3, `Immersive hero must contain exactly three background images at ${width}px`)
   assert.equal(composition.headingCount, 1, `Immersive hero must have one heading at ${width}px`)
@@ -175,6 +131,7 @@ for (const [name, width, path] of [
   await page.evaluate(() => {
     for (const image of document.querySelectorAll('img[loading="lazy"]')) image.loading = 'eager'
   })
+  await revealPage(page)
   await new Promise((resolveDelay) => setTimeout(resolveDelay, 600))
   const layout = await page.evaluate(() => {
     const sections = [...document.querySelectorAll('main > *')]
@@ -254,8 +211,9 @@ for (const [width, path] of [[390, '/'], [1440, '/'], [1920, '/'], [390, '/servi
 }
 
 const interactionPage = await preparePage(390)
-assert.equal(await interactionPage.$$eval('.hero', (elements) => elements.length), 1)
+assert.equal(await interactionPage.$$eval('.hero', (elements) => elements.length), 0)
 assert.equal(await interactionPage.$$eval('.immersive-hero', (elements) => elements.length), 1)
+assert.ok(await interactionPage.$$eval('.immersive-hero .reveal', (elements) => elements.every((element) => element.classList.contains('is-visible'))))
 await interactionPage.click('.menu-button')
 assert.equal(await interactionPage.$eval('.mobile-menu', (element) => element.classList.contains('mobile-menu--open')), true)
 assert.equal(await interactionPage.$eval('.menu-button', (element) => element.getAttribute('aria-expanded')), 'true')
@@ -270,6 +228,7 @@ await new Promise((resolveDelay) => setTimeout(resolveDelay, 500))
 assert.equal(await interactionPage.$$eval('.service-explorer', (elements) => elements.length), 0)
 await interactionPage.evaluate(() => window.scrollTo({ top: document.querySelector('#servicios-rapidos').offsetTop, behavior: 'instant' }))
 await new Promise((resolveDelay) => setTimeout(resolveDelay, 200))
+assert.ok(await interactionPage.$$eval('#servicios-rapidos .reveal', (elements) => elements.some((element) => element.classList.contains('is-visible'))))
 assert.equal(await interactionPage.$eval('.desktop-nav a.active', (element) => element.textContent), 'Experiencias')
 await interactionPage.click('.experience-tile__link[href="/servicios/spa"]')
 await interactionPage.waitForFunction(() => location.pathname === '/servicios/spa')
@@ -363,7 +322,7 @@ assert.equal(await interactionPage.$eval('.catalog__nav a.active', (element) => 
 assert.ok(await interactionPage.$$eval('.catalog__nav a', (elements) => elements.every((element) => element.getBoundingClientRect().height >= 44)))
 
 await interactionPage.goto(`${baseUrl}/?hero=inmersivo`, { waitUntil: 'domcontentloaded' })
-assert.equal(await interactionPage.$$eval('.hero', (elements) => elements.length), 1)
+assert.equal(await interactionPage.$$eval('.hero', (elements) => elements.length), 0)
 assert.equal(await interactionPage.$$eval('.immersive-hero', (elements) => elements.length), 1)
 assert.ok(await interactionPage.$eval('.immersive-hero .button--primary', (element) => element.href.startsWith('https://wa.me/51946992673')))
 assert.equal(await interactionPage.$eval('.immersive-hero__secondary', (element) => element.getAttribute('href')), '#servicios-rapidos')

@@ -5200,12 +5200,25 @@ main > section[id] {
   }
 }
 
-/* Content must never depend on scroll-triggered animation to remain visible. */
+/* Gentle, one-time entrances as sections reach the viewport. */
 .reveal,
 .reveal.is-visible {
-  opacity: 1;
   transform: none;
-  transition: none;
+}
+
+.reveal {
+  opacity: 0;
+  translate: 0 22px;
+  transition:
+    opacity 680ms ease var(--reveal-delay),
+    translate 680ms cubic-bezier(0.22, 0.72, 0.25, 1) var(--reveal-delay);
+  will-change: opacity, translate;
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  translate: 0 0;
+  will-change: auto;
 }
 
 /* Header and home hero: one navigation shell and two intentional visual areas. */
@@ -6144,6 +6157,13 @@ main > section[id] {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal.is-visible {
+    opacity: 1;
+    translate: none;
+    transition: none;
+  }
+
   .immersive-hero__slide {
     animation: none;
   }
@@ -6151,10 +6171,6 @@ main > section[id] {
   .immersive-hero__slide:first-child {
     opacity: 1;
   }
-}
-
-.immersive-hero + .hero {
-  margin-top: 0;
 }
 
 /* Refined mobile navigation: one clear menu trigger and lighter option rows. */

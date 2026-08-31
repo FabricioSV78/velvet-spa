@@ -1,8 +1,26 @@
+import { useEffect, useRef, useState } from 'react'
 import { ArrowRight } from 'lucide-react'
 
 export function Reveal({ children, className = '', as: Tag = 'div', delay = 0, ...props }) {
+  const elementRef = useRef(null)
+  const [isVisible, setIsVisible] = useState(() => typeof window === 'undefined' || !('IntersectionObserver' in window))
+
+  useEffect(() => {
+    const element = elementRef.current
+    if (!element || isVisible) return undefined
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return
+      setIsVisible(true)
+      observer.unobserve(element)
+    }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' })
+
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [isVisible])
+
   return (
-    <Tag className={`reveal ${className}`} style={{ '--reveal-delay': `${delay}ms` }} {...props}>
+    <Tag ref={elementRef} className={`reveal ${isVisible ? 'is-visible' : ''} ${className}`} style={{ '--reveal-delay': `${delay}ms` }} {...props}>
       {children}
     </Tag>
   )

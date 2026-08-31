@@ -23,15 +23,15 @@ export default function ReviewsSection() {
       </div>
 
       <div className="reviews-showcase__grid">
-        {publicReviews.map((review) => (
-          <article className="public-review" key={review.id}>
+        {publicReviews.map((review, index) => (
+          <Reveal as="article" className="public-review" delay={(index % 2) * 70} key={review.id}>
             <Quote className="public-review__quote" aria-hidden="true" size={22} strokeWidth={1.6} />
             <blockquote><p>{review.message}</p></blockquote>
             <footer>
               <div><strong>{review.author}</strong><span>Cliente de Velvet</span></div>
               <a href={review.sourceUrl} target="_blank" rel="noreferrer">{review.source}<ExternalLink aria-hidden="true" size={13} /></a>
             </footer>
-          </article>
+          </Reveal>
         ))}
       </div>
       <p className="reviews-showcase__note">Opiniones publicadas en directorios públicos y presentadas sin alterar su sentido.</p>
