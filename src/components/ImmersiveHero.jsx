@@ -4,8 +4,8 @@ import { Reveal } from './ui.jsx'
 import { whatsappUrl } from '../data/business.js'
 
 const heroSlides = [
-  { src: '/images/velvet/spa.webp', className: 'immersive-hero__slide--spa' },
   { src: '/images/velvet/hero-hd.webp', className: 'immersive-hero__slide--salon' },
+  { src: '/images/velvet/spa.webp', className: 'immersive-hero__slide--spa' },
   { src: '/images/velvet/head-spa.webp', className: 'immersive-hero__slide--wellness' },
 ]
 
