@@ -1,0 +1,35 @@
+{
+  "name": "velvet-salon-spa",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "optimize:images": "node scripts/optimize-images.mjs",
+    "images:responsive": "node scripts/generate-responsive-images.mjs",
+    "extract:catalog": "node scripts/extract-catalog-assets.mjs",
+    "review:visual": "node scripts/visual-review.mjs"
+  },
+  "dependencies": {
+    "lucide-react": "1.37.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-router-dom": "7.18.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@tailwindcss/vite": "4.3.3",
+    "@vitejs/plugin-react": "6.1.1",
+    "eslint": "10.9.1",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "eslint-plugin-react-refresh": "0.5.5",
+    "globals": "17.11.0",
+    "puppeteer-core": "25.9.0",
+    "sharp": "0.35.4",
+    "tailwindcss": "4.3.3",
+    "vite": "8.2.2"
+  }
+}
